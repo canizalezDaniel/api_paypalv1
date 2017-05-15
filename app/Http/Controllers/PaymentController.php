@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Anouar\Paypalpayment\Facades\PaypalPayment;
 use Illuminate\Http\Request;
 use App\Http\Requests;
+use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
@@ -33,14 +34,16 @@ class PaymentController extends Controller
     public function postPayment(Request $request)
     {
 
-        dd($request->all());
+
+        //dd($request->all());
         $payer = Paypalpayment::payer();
         $payer->setPaymentMethod("paypal");
 
         $items = array();
-        $productos=$request->json('items');
 
-        foreach($productos as $item_producto){
+        //$productos=$request->json('items');
+
+        /*foreach($productos as $item_producto){
 
 
             $item = Paypalpayment::item();
@@ -50,10 +53,32 @@ class PaymentController extends Controller
                 ->setQuantity($item_producto['quantity'])
                 ->setTax(0.3)
                 ->setPrice($item_producto['price']);
-
+            dd($item);
             $items[] = $item;
 
+        }*/
+
+        $inputs = Input::all();
+        foreach ($inputs['name'] as $index => $value) {
+            $item1 = Paypalpayment::item();
+            $item1->setName($inputs['name'][$index])
+                ->setDescription($inputs['description'][$index])
+                ->setCurrency('USD')
+                ->setQuantity($inputs['quantity'][$index])
+                ->setTax(0.3)
+                ->setPrice($inputs['price'][$index]);
+            $items[] = $item1;
         }
+
+       /* $item1 = Paypalpayment::item();
+        $item1->setName($request->get('name'))
+            ->setDescription($request->get('description'))
+            ->setCurrency('USD')
+            ->setQuantity($request->get('quantity'))
+            ->setTax(0.3)
+            ->setPrice($request->get('price'));*/
+
+
 
 
         /*$item1 = Paypalpayment::item();
@@ -78,16 +103,14 @@ class PaymentController extends Controller
         $itemList = Paypalpayment::itemList();
         //$itemList->setItems(array($item1));
         $itemList->setItems($items);
-        //dd($itemList);
         $details = Paypalpayment::details();
-        $details->setShipping(1.2)
-            ->setTax(1.3)
+        $details
             //total of items prices
             ->setSubtotal($request->get('subtotal'));
 
         //Payment Amount
         $amount = Paypalpayment::amount();
-        $amount->setCurrency("USD")
+        $amount->setCurrency('USD')
             // the total is $17.8 = (16 + 0.6) * 1 ( of quantity) + 1.2 ( of Shipping).
             ->setTotal($request->get('total'))
             ->setDetails($details);
